@@ -17,6 +17,8 @@ public class Zadatak9 {
 
     WebDriver driver;
     WebDriverWait wait;
+    //Naziv knjige cuvamo kao polje klase, da bi ga video i test koji proverava korpu
+    String itemNameText;
 
     @BeforeClass
     public void beforeClass() throws InterruptedException {
@@ -30,7 +32,7 @@ public class Zadatak9 {
         driver.navigate().to("https://www.amazon.com/Selenium-Framework-Design-Data-Driven-Testing/dp/1788473574/ref=sr_1_2?dchild=1&keywords=selenium+test&qid=1631829742&sr=8-2");
 
     }
-
+    //Test 1: korpa je prazna pre dodavanja
     @Test(priority = 1)
     public void praznaKorpa(){
         WebElement itemName = driver.findElement(By.id("productTitle"));
@@ -42,7 +44,8 @@ public class Zadatak9 {
         Assert.assertTrue(emptyCart.isDisplayed());
         driver.navigate().back();
     }
-    @Test(priority = 2)
+    //Test 2: dodavanje knjige u korpu
+    @Test(priority = 2, dependsOnMethods = "praznaKorpa")
     public void dodavanjeKnjige(){
         WebElement addToCartButton = driver.findElement(By.id("add-to-cart-button"));
         addToCartButton.click();
@@ -52,11 +55,29 @@ public class Zadatak9 {
         Assert.assertEquals(cartNumber.getText(), "1");
 
     }
+    //Test 3: u korpi je bas ta knjiga
+    @Test(priority = 3, dependsOnMethods = "dodavanjeKnjige")
+    public void uKorpiJeIstaKnjiga() {
+        WebElement cartNumber = driver.findElement(By.id("nav-cart-count"));
+        cartNumber.click();
 
-    @AfterMethod
-    public void cookies(){
-        driver.manage().deleteAllCookies();
+        WebElement itemNameInCart = driver.findElement(By.className("a-truncate-cut"));
+        Assert.assertEquals(itemNameInCart.getText(), itemNameText);
     }
+
+    //Test 4: posle brisanja kolacica korpa je prazna
+    @Test(priority = 4, dependsOnMethods = "uKorpiJeIstaKnjiga")
+    public void korpaPraznaPosleBrisanjaKolacica() {
+        driver.manage().deleteAllCookies();
+        driver.navigate().refresh();
+
+        WebElement emptyCart = driver.findElement(By.id("sc-empty-cart"));
+        Assert.assertTrue(emptyCart.isDisplayed());
+
+        WebElement cartNumber = driver.findElement(By.id("nav-cart-count"));
+        Assert.assertEquals(cartNumber.getText(), "0");
+    }
+
     @AfterClass
     public void quit(){
        driver.quit();
